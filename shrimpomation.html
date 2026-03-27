@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Shrimp Hunter: Touch Edition</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #1a1a1a;
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            touch-action: none; /* Prevents scrolling while playing */
+        }
+
+        h1 {
+            color: #ff4757;
+            text-transform: uppercase;
+            margin: 10px 0;
+            font-size: 2rem;
+            text-align: center;
+        }
+
+        #game-box {
+            position: relative;
+            width: 90vw;
+            max-width: 800px;
+            height: 60vh;
+            background-color: #2f3542;
+            border: 4px solid #ff4757;
+            border-radius: 12px;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        .shrimp {
+            position: absolute;
+            font-size: 40px;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            will-change: transform;
+        }
+
+        #player-shrimp {
+            z-index: 100;
+            filter: drop-shadow(0 0 10px gold);
+        }
+
+        #ui {
+            margin-top: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            color: #ffa502;
+        }
+
+        .death-ring {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border: 2px solid red;
+            border-radius: 50%;
+            animation: ripple 0.4s ease-out forwards;
+        }
+
+        @keyframes ripple {
+            from { transform: scale(0.5); opacity: 1; }
+            to { transform: scale(2); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>KILL THEM ALL</h1>
+
+    <div id="game-box">
+        <div id="player-shrimp" class="shrimp">🍤</div>
+    </div>
+
+    <div id="ui">Score: <span id="score">0</span></div>
+
+    <script>
+        const box = document.getElementById('game-box');
+        const player = document.getElementById('player-shrimp');
+        const scoreDisplay = document.getElementById('score');
+        
+        let score = 0;
+        let victims = [];
+        const victimPop = 10;
+
+        // Player position
+        let pX = 100, pY = 100;
+
+        // Universal Input Handler (Mouse & Touch)
+        function handleMove(e) {
+            const rect = box.getBoundingClientRect();
+            let clientX, clientY;
+
+            if (e.touches) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+
+            pX = clientX - rect.left;
+            pY = clientY - rect.top;
+        }
+
+        box.addEventListener('mousemove', handleMove);
+        box.addEventListener('touchmove', (e) => {
+            e.preventDefault(); // Stop screen wobbling
+            handleMove(e);
+        }, { passive: false });
+
+        function createVictim() {
+            const el = document.createElement('div');
+            el.className = 'shrimp';
+            el.innerHTML = '🍤';
+            box.appendChild(el);
+            
+            return {
+                el: el,
+                x: Math.random() * (box.clientWidth - 50),
+                y: Math.random() * (box.clientHeight - 50),
+                // Slow wandering movement
+                vx: (Math.random() - 0.5) * 3,
+                vy: (Math.random() - 0.5) * 3
+            };
+        }
+
+        function populate() {
+            for (let i = 0; i < victimPop; i++) {
+                victims.push(createVictim());
+            }
+        }
+
+        function gameLoop() {
+            // Update Player (No clicking needed, just follow input)
+            player.style.left = (pX - 25) + 'px';
+            player.style.top = (pY - 25) + 'px';
+
+            for (let i = victims.length - 1; i >= 0; i--) {
+                let v = victims[i];
+
+                // Update movement
+                v.x += v.vx;
+                v.y += v.vy;
+
+                // Simple screen wrap or bounce for victims
+                if (v.x < 0 || v.x > box.clientWidth - 50) v.vx *= -1;
+                if (v.y < 0 || v.y > box.clientHeight - 50) v.vy *= -1;
+
+                v.el.style.left = v.x + 'px';
+                v.el.style.top = v.y + 'px';
+
+                // KILL LOGIC: Direct touch = instant death
+                const dx = v.x + 25 - pX;
+                const dy = v.y + 25 - pY;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+
+                if (dist < 40) {
+                    // Visual feedback
+                    const ring = document.createElement('div');
+                    ring.className = 'death-ring';
+                    ring.style.left = v.x + 'px';
+                    ring.style.top = v.y + 'px';
+                    box.appendChild(ring);
+                    setTimeout(() => ring.remove(), 400);
+
+                    // Remove victim immediately
+                    box.removeChild(v.el);
+                    victims.splice(i, 1);
+                    
+                    score++;
+                    scoreDisplay.innerText = score;
+                }
+            }
+
+            // Restart round but keep score
+            if (victims.length === 0) {
+                populate();
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        populate();
+        gameLoop();
+    </script>
+</body>
+</html>
