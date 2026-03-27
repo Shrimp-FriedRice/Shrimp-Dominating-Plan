@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shrimp Apocalypse</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #2c3e50;
+            font-family: 'Segoe UI', sans-serif;
+            overflow: hidden; /* Keeps the shrimp from creating scrollbars */
+        }
+
+        #ui-layer {
+            position: relative;
+            z-index: 1000; /* Keeps the button above the shrimp pile */
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        h1 {
+            color: #ff7f50;
+            margin-top: 0;
+            text-shadow: 2px 2px 0px #000;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            background-color: #ff7f50;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            transition: transform 0.1s, background-color 0.3s;
+            box-shadow: 0 5px 0 #e66a3c;
+            font-weight: bold;
+        }
+
+        button:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 #e66a3c;
+        }
+
+        button:hover {
+            background-color: #ff8e66;
+        }
+
+        .shrimp-entity {
+            position: absolute;
+            font-size: 3rem;
+            user-select: none;
+            pointer-events: none; /* Allows you to click "through" them to the button */
+            z-index: 1;
+            transition: transform 0.2s ease-out;
+        }
+
+        #counter {
+            color: white;
+            font-size: 1.2rem;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <h1>Shrimp Command</h1>
+        <button id="spawnBtn">SPAWN SHRIMP 🍤</button>
+        <div id="counter">Population: 0</div>
+    </div>
+
+    <script>
+        const btn = document.getElementById('spawnBtn');
+        const counterDisplay = document.getElementById('counter');
+        let count = 0;
+
+        btn.addEventListener('click', () => {
+            count++;
+            counterDisplay.innerText = `Population: ${count}`;
+
+            // Create shrimp element
+            const shrimp = document.createElement('div');
+            shrimp.className = 'shrimp-entity';
+            shrimp.innerText = '🍤';
+
+            // Random position (Subtracting 50px to keep them mostly on screen)
+            const x = Math.random() * (window.innerWidth - 50);
+            const y = Math.random() * (window.innerHeight - 50);
+            
+            // Random rotation for that "piled up" look
+            const rotation = Math.random() * 360;
+
+            shrimp.style.left = x + 'px';
+            shrimp.style.top = y + 'px';
+            shrimp.style.transform = `rotate(${rotation}deg)`;
+
+            document.body.appendChild(shrimp);
+
+            // Subtle "pop" effect when they appear
+            shrimp.animate([
+                { transform: `rotate(${rotation}deg) scale(0)`, opacity: 0 },
+                { transform: `rotate(${rotation}deg) scale(1.2)`, opacity: 1 },
+                { transform: `rotate(${rotation}deg) scale(1)`, opacity: 1 }
+            ], {
+                duration: 200,
+                easing: 'ease-out'
+            });
+        });
+    </script>
+</body>
+</html>
