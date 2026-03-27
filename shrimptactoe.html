@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shrimp-Tac-Toe: 30x30 Edition</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #87CEEB; /* Tropical Water */
+            background-image: 
+                radial-gradient(circle at 10% 10%, #F3E5AB 80px, #C2B280 120px, transparent 150px),
+                radial-gradient(circle at 90% 85%, #F3E5AB 100px, #C2B280 160px, transparent 200px),
+                radial-gradient(circle at 50% 15%, #F3E5AB 40px, #C2B280 70px, transparent 90px);
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            overflow: hidden;
+            min-height: 100vh;
+        }
+
+        h1 {
+            color: #fff;
+            text-shadow: 4px 4px 0px #e67e22;
+            font-size: 2.5rem;
+            margin: 15px 0;
+        }
+
+        #ui-layer {
+            background: rgba(255, 255, 255, 0.4);
+            padding: 10px;
+            border-radius: 20px;
+            backdrop-filter: blur(8px);
+            border: 3px solid #fff;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+
+        canvas {
+            background-color: rgba(255, 255, 255, 0.95);
+            cursor: crosshair;
+            display: block;
+            border-radius: 5px;
+        }
+
+        #status-bar {
+            margin-top: 15px;
+            padding: 8px 25px;
+            background: #fff;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #d35400;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .controls {
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 5px 15px;
+            cursor: pointer;
+            border-radius: 10px;
+            border: none;
+            background: #e67e22;
+            color: white;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Shrimp-Tac-Toe</h1>
+    
+    <div id="ui-layer">
+        <canvas id="board" width="600" height="600"></canvas>
+    </div>
+
+    <div id="status-bar">Your Turn: 🍤</div>
+    <div class="controls">
+        <button onclick="resetGame()">Reset Island</button>
+    </div>
+
+<script>
+    const canvas = document.getElementById('board');
+    const ctx = canvas.getContext('2d');
+    const status = document.getElementById('status-bar');
+
+    const SIZE = 30; // 30x30 Grid
+    const WIN = 10;
+    const CELL = canvas.width / SIZE;
+    
+    let board = Array(SIZE).fill().map(() => Array(SIZE).fill(null));
+    let isPlayerTurn = true;
+    let gameOver = false;
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.strokeStyle = "#b0d4e3";
+        ctx.lineWidth = 1;
+        for(let i=0; i<=SIZE; i++) {
+            ctx.beginPath();
+            ctx.moveTo(i*CELL, 0); ctx.lineTo(i*CELL, canvas.height);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(0, i*CELL); ctx.lineTo(canvas.width, i*CELL);
+            ctx.stroke();
+        }
+
+        ctx.font = `${CELL * 0.75}px Arial`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        for(let r=0; r<SIZE; r++) {
+            for(let c=0; c<SIZE; c++) {
+                if(board[r][c]) {
+                    ctx.fillText(board[r][c], c*CELL + CELL/2, r*CELL + CELL/2);
+                }
+            }
+        }
+    }
+
+    function checkWin(r, c, p) {
+        const dirs = [[0,1],[1,0],[1,1],[1,-1]];
+        for(let [dr, dc] of dirs) {
+            let count = 1;
+            for(let i=1; i<WIN; i++) if(board[r+dr*i]?.[c+dc*i] === p) count++; else break;
+            for(let i=1; i<WIN; i++) if(board[r-dr*i]?.[c-dc*i] === p) count++; else break;
+            if(count >= WIN) return true;
+        }
+        return false;
+    }
+
+    // AI Heuristic: Check how many pieces are in a line from a potential spot
+    function evaluateSpot(r, c, p) {
+        let score = 0;
+        const dirs = [[0,1],[1,0],[1,1],[1,-1]];
+        for(let [dr, dc] of dirs) {
+            let lineCount = 0;
+            let openEnds = 0;
+            
+            // Check direction
+            for(let i=1; i<WIN; i++) {
+                let cell = board[r+dr*i]?.[c+dc*i];
+                if(cell === p) lineCount++;
+                else { if(cell === null) openEnds++; break; }
+            }
+            // Check opposite direction
+            for(let i=1; i<WIN; i++) {
+                let cell = board[r-dr*i]?.[c-dc*i];
+                if(cell === p) lineCount++;
+                else { if(cell === null) openEnds++; break; }
+            }
+            
+            if(lineCount >= WIN-1) score += 100000; // Win move
+            else if(lineCount > 0) score += Math.pow(10, lineCount) * openEnds;
+        }
+        return score;
+    }
+
+    function aiMove() {
+        if(gameOver) return;
+        
+        let bestScore = -1;
+        let bestMoves = [];
+
+        for(let r=0; r<SIZE; r++) {
+            for(let c=0; c<SIZE; c++) {
+                if(!board[r][c]) {
+                    let offense = evaluateSpot(r, c, "🦐");
+                    let defense = evaluateSpot(r, c, "🍤");
+                    let total = offense + (defense * 1.2); // AI values defense highly
+
+                    if(total > bestScore) {
+                        bestScore = total;
+                        bestMoves = [{r, c}];
+                    } else if (total === bestScore) {
+                        bestMoves.push({r, c});
+                    }
+                }
+            }
+        }
+
+        const move = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+        board[move.r][move.c] = "🦐";
+        
+        if(checkWin(move.r, move.c, "🦐")) {
+            status.innerText = "The Enemy Shrimp Won! 🦐";
+            gameOver = true;
+        } else {
+            status.innerText = "Your Turn: 🍤";
+            isPlayerTurn = true;
+        }
+        draw();
+    }
+
+    canvas.addEventListener('click', (e) => {
+        if(!isPlayerTurn || gameOver) return;
+        const rect = canvas.getBoundingClientRect();
+        const c = Math.floor((e.clientX - rect.left) / (rect.width / SIZE));
+        const r = Math.floor((e.clientY - rect.top) / (rect.height / SIZE));
+
+        if(board[r][c] === null) {
+            board[r][c] = "🍤";
+            draw();
+            if(checkWin(r, c, "🍤")) {
+                status.innerText = "You Won! 🍤";
+                gameOver = true;
+            } else {
+                isPlayerTurn = false;
+                status.innerText = "Enemy 🦐 is plotting...";
+                setTimeout(aiMove, 400);
+            }
+        }
+    });
+
+    function resetGame() {
+        board = Array(SIZE).fill().map(() => Array(SIZE).fill(null));
+        isPlayerTurn = true;
+        gameOver = false;
+        status.innerText = "Your Turn: 🍤";
+        draw();
+    }
+
+    draw();
+</script>
+</body>
+</html>
