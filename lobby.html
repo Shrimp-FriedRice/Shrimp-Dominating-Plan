@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>THE SHRIMPOMINATION</title>
+    <style>
+        :root {
+            --fire-orange: #ff4500;
+            --blood-red: #8b0000;
+            --ash-grey: #2c2c2c;
+        }
+
+        body {
+            background: radial-gradient(circle, #220000 0%, #000000 100%);
+            color: white;
+            font-family: 'Impact', 'Arial Black', sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+
+        /* Burning Earth Background Effect */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: url('https://www.transparenttextures.com/patterns/carbon-fibre.png');
+            opacity: 0.2;
+            z-index: -1;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 10px;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            font-size: 3rem;
+            color: var(--fire-orange);
+            text-shadow: 0 0 20px var(--blood-red), 3px 3px 0px #000;
+            margin: 0;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            font-family: sans-serif;
+            font-size: 0.9rem;
+            letter-spacing: 4px;
+            color: #ffaa00;
+            margin-top: 10px;
+        }
+
+        .link-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 500px;
+            margin-top: 30px;
+        }
+
+        .shrimp-link {
+            background: linear-gradient(90deg, #1a1a1a 0%, #330000 100%);
+            border: 2px solid var(--blood-red);
+            padding: 25px;
+            text-decoration: none;
+            color: white;
+            font-size: 1.4rem;
+            text-align: center;
+            border-radius: 4px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Enslavement vibe: Chains on the side */
+        .shrimp-link::before {
+            content: "⛓️";
+            position: absolute;
+            left: 10px;
+            opacity: 0.5;
+        }
+
+        .shrimp-link::after {
+            content: "🔥";
+            position: absolute;
+            right: 10px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .shrimp-link:active {
+            background: var(--fire-orange);
+            transform: scale(0.98);
+            color: black;
+            border-color: white;
+        }
+
+        .shrimp-link:active::after {
+            opacity: 1;
+        }
+
+        /* Floating Ember particles */
+        .ember {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--fire-orange);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--fire-orange);
+            animation: rise 4s infinite linear;
+            pointer-events: none;
+        }
+
+        @keyframes rise {
+            0% { transform: translateY(100vh) translateX(0); opacity: 1; }
+            100% { transform: translateY(-10vh) translateX(50px); opacity: 0; }
+        }
+
+        .footer-warning {
+            margin-top: 40px;
+            color: #555;
+            font-style: italic;
+            font-size: 0.8rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>The Shrimpomination</h1>
+    <div class="subtitle">THE WORLD ASHES. THE SHRIMP REIGN.</div>
+</header>
+
+<div class="link-grid">
+    <a href="https://shrimp-friedrice.github.io/Shrimp-Dominating-Plan/shrimpomation.html" class="shrimp-link">Shrimpy of kill 'em all</a>
+    
+    <a href="https://shrimp-friedrice.github.io/Shrimp-Dominating-Plan/shrimpbomination.html" class="shrimp-link">Shrimp's population crisis</a>
+    
+    <a href="https://shrimp-friedrice.github.io/Shrimp-Dominating-Plan/shrimptactoe.html" class="shrimp-link">Shrimp's colonization</a>
+    
+    <a href="https://shrimp-friedrice.github.io/Shrimp-Dominating-Plan/shrimpyjump.html" class="shrimp-link">Shrimp's escape because getting caught murdering his kind</a>
+    
+    <a href="https://shrimp-friedrice.github.io/Shrimp-Dominating-Plan/hahashrimp.html" class="shrimp-link">Shrimpy's torture</a>
+    
+    <a href="https://shrimp-friedrice.github.io/Shrimp-Dominating-Plan/" class="shrimp-link">Cult of shrimp</a>
+</div>
+
+<div class="footer-warning">NO SHRIMP SHALL BE SPARED.</div>
+
+<script>
+    // Create random fire embers for the background
+    for (let i = 0; i < 20; i++) {
+        let ember = document.createElement('div');
+        ember.className = 'ember';
+        ember.style.left = Math.random() * 100 + 'vw';
+        ember.style.animationDelay = Math.random() * 5 + 's';
+        ember.style.opacity = Math.random();
+        document.body.appendChild(ember);
+    }
+</script>
+
+</body>
+</html>
