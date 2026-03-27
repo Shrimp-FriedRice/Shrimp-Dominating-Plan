@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cakebatory</title>
+    <style>
+        :root {
+            --cake-color: #e3c4a8; /* Bland base */
+        }
+
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #ffe4e1;
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+        }
+
+        /* Table & Cake Area */
+        #stage {
+            position: relative;
+            width: 60%;
+            height: 40%;
+            background: #6f4e37; /* Table */
+            border-top: 20px solid #5d3a1a;
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .cake-container {
+            position: relative;
+            width: 220px;
+            height: 130px;
+            background-color: var(--cake-color);
+            border-radius: 15px 15px 0 0;
+            transition: background-color 0.6s ease;
+            bottom: 0;
+            z-index: 2;
+        }
+
+        /* Decorations Positioning */
+        .decor {
+            position: absolute;
+            display: none;
+            width: 100%;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        #trim { bottom: 0; height: 20px; border-bottom: 10px dotted #fff; border-radius: 0 0 5px 5px; width: 100%; display: none; }
+        
+        /* 1 = Center, 2 = Around */
+        .pos-1 { top: -25px; font-size: 30px; z-index: 10; left: 0; }
+        .pos-2 { top: 10px; display: none; justify-content: space-around; font-size: 18px; z-index: 5; }
+
+        /* UI Styling */
+        .controls { text-align: center; margin-top: 30px; z-index: 20; }
+        .btn-group { display: none; gap: 8px; flex-wrap: wrap; justify-content: center; max-width: 500px; }
+        
+        button {
+            padding: 12px 18px;
+            font-size: 14px;
+            cursor: pointer;
+            border: 2px solid #333;
+            background: white;
+            transition: 0.2s;
+            font-weight: bold;
+        }
+
+        button:hover:not(:disabled) { background: #eee; transform: translateY(-2px); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        #next-btn { background: #4caf50; color: white; margin-top: 15px; }
+
+        /* The Creature */
+        #creature {
+            position: absolute;
+            bottom: -300px;
+            font-size: 180px;
+            transition: bottom 0.8s cubic-bezier(.36,.07,.19,.97);
+            z-index: 100;
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div id="stage">
+        <div class="cake-container" id="cake-body">
+            <div id="trim" class="decor"></div>
+            
+            <div id="cherry1" class="decor pos-1">🍒</div>
+            <div id="choc1" class="decor pos-1">🍫</div>
+            <div id="cookie1" class="decor pos-1">🍪</div>
+            <div id="straw1" class="decor pos-1">🍓</div>
+
+            <div id="cherry2" class="decor pos-2"><span>🍒</span><span>🍒</span><span>🍒</span></div>
+            <div id="choc2" class="decor pos-2"><span>🍫</span><span>🍫</span><span>🍫</span></div>
+            <div id="cookie2" class="decor pos-2"><span>🍪</span><span>🍪</span><span>🍪</span></div>
+            <div id="straw2" class="decor pos-2"><span>🍓</span><span>🍓</span><span>🍓</span></div>
+        </div>
+        <div id="creature">🐥</div>
+    </div>
+
+    <div class="controls">
+        <h2 id="status">Welcome to Cakebatory</h2>
+        <button id="start-btn">Play</button>
+
+        <div id="step-1" class="btn-group">
+            <button onclick="applyFrosting('#4b2c20', this)">Dark Choc</button>
+            <button onclick="applyFrosting('#7b3f00', this)">Chocolate</button>
+            <button onclick="applyFrosting('#ffc0cb', this)">Strawberry</button>
+            <button onclick="applyFrosting('#fff8dc', this)">Vanilla</button>
+            <button onclick="applyFrosting('#9dc183', this)">Matcha</button>
+        </div>
+
+        <div id="step-2" class="btn-group">
+            <button onclick="toggleItem('trim')">Toggle Cream Trim</button>
+        </div>
+
+        <div id="step-3" class="btn-group">
+            <button onclick="toggleItem('cherry1')">Cherry (1)</button>
+            <button onclick="toggleItem('cherry2')">Cherry (2)</button>
+            <button onclick="toggleItem('choc1')">Choc Bar (1)</button>
+            <button onclick="toggleItem('choc2')">Choc Bar (2)</button>
+            <button onclick="toggleItem('cookie1')">Cookie (1)</button>
+            <button onclick="toggleItem('cookie2')">Cookie (2)</button>
+            <button onclick="toggleItem('straw1')">Strawberry (1)</button>
+            <button onclick="toggleItem('straw2')">Strawberry (2)</button>
+        </div>
+
+        <br>
+        <button id="next-btn" class="hidden">Next Step</button>
+        <div id="restart-area" class="hidden">
+            <p>The creature loves the cake</p>
+            <button onclick="location.reload()">Restart</button>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 0;
+        const status = document.getElementById('status');
+        const nextBtn = document.getElementById('next-btn');
+
+        document.getElementById('start-btn').onclick = function() {
+            this.classList.add('hidden');
+            nextBtn.classList.remove('hidden');
+            goToStep(1);
+        };
+
+        nextBtn.onclick = function() {
+            currentStep++;
+            if(currentStep === 2) goToStep(2);
+            else if(currentStep === 3) goToStep(3);
+            else finishGame();
+        };
+
+        function goToStep(step) {
+            currentStep = step;
+            document.querySelectorAll('.btn-group').forEach(g => g.style.display = 'none');
+            document.getElementById(`step-${step}`).style.display = 'flex';
+            
+            if(step === 1) status.innerText = "Phase 1: Choose ONE Frosting";
+            if(step === 2) status.innerText = "Phase 2: Cream Trim?";
+            if(step === 3) status.innerText = "Phase 3: Final Toppings (Choose many)";
+        }
+
+        function applyFrosting(color, btn) {
+            document.documentElement.style.setProperty('--cake-color', color);
+            // Disable all frosting buttons after one click
+            document.querySelectorAll('#step-1 button').forEach(b => b.disabled = true);
+            btn.style.border = "4px solid gold";
+        }
+
+        function toggleItem(id) {
+            const el = document.getElementById(id);
+            const displayStyle = (id.includes('2')) ? 'flex' : 'block';
+            el.style.display = (el.style.display === displayStyle) ? 'none' : displayStyle;
+        }
+
+        function finishGame() {
+            status.classList.add('hidden');
+            nextBtn.classList.add('hidden');
+            document.querySelectorAll('.btn-group').forEach(g => g.style.display = 'none');
+
+            const creature = document.getElementById('creature');
+            const cake = document.getElementById('cake-body');
+
+            // Animation sequence
+            setTimeout(() => {
+                creature.style.bottom = "10%"; // Moves up
+                setTimeout(() => {
+                    cake.style.opacity = "0"; // Eaten!
+                    setTimeout(() => {
+                        creature.style.bottom = "-300px"; // Goes away
+                        document.getElementById('restart-area').classList.remove('hidden');
+                    }, 800);
+                }, 600);
+            }, 300);
+        }
+    </script>
+</body>
+</html>
