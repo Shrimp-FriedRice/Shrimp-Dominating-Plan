@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>The Hungry Brits</title>
+    <style>
+        :root { --gold: #ffd700; --royal-blue: #002366; --glass: rgba(255,255,255,0.1); }
+        body {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 100vh; margin: 0; background: #050505;
+            font-family: 'Segoe UI', sans-serif; color: white; overflow: hidden; touch-action: none;
+        }
+        #ui-header {
+            width: 340px; display: flex; justify-content: space-between;
+            padding: 8px 15px; background: var(--royal-blue); border: 2px solid var(--gold);
+            border-bottom: none; font-weight: bold; box-sizing: border-box;
+        }
+        #game-container { position: relative; border: 2px solid var(--gold); background: #000; overflow: hidden; }
+        canvas { display: block; }
+
+        /* Market Section */
+        #market {
+            width: 340px; background: #1a1a1a; border: 2px solid var(--gold); border-top: none;
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; padding: 5px; box-sizing: border-box;
+        }
+        .shop-item {
+            background: var(--glass); padding: 5px; border-radius: 5px; text-align: center; font-size: 11px;
+            cursor: pointer; border: 1px solid transparent;
+        }
+        .shop-item:active { background: var(--gold); color: black; }
+        .shop-item b { display: block; font-size: 16px; }
+
+        /* Thumbstick */
+        #stick-container {
+            position: fixed; bottom: 30px; left: 30px; width: 100px; height: 100px;
+            background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        }
+        #stick { width: 40px; height: 40px; background: var(--gold); border-radius: 50%; position: relative; }
+
+        #status-bar { font-size: 12px; color: var(--gold); margin-top: 5px; height: 15px; }
+        .overlay { text-align: center; padding: 20px; background: #111; border: 3px solid var(--gold); border-radius: 15px; position: absolute; z-index: 100; }
+        button { padding: 10px 20px; font-size: 18px; background: var(--gold); border: none; font-weight: bold; cursor: pointer; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+    <div id="menu" class="overlay">
+        <h1 style="color:var(--gold)">The Hungry Brits 🇬🇧</h1>
+        <button onclick="startGame()">START</button>
+    </div>
+
+    <div id="fail-menu" class="overlay" style="display:none">
+        <h2>TIME'S UP!</h2>
+        <button onclick="restartRound()">RETRY</button>
+    </div>
+
+    <div id="game-ui" style="display:none">
+        <div id="ui-header">
+            <span>Pts: <span id="score">0</span></span>
+            <span>Lvl: <span id="level">1</span></span>
+            <span>⏱ <span id="timer">80</span></span>
+        </div>
+
+        <div id="game-container">
+            <canvas id="gameCanvas"></canvas>
+        </div>
+
+        <div id="market">
+            <div class="shop-item" onclick="buyItem('speed')"><b>🧀</b>Speed (10p)</div>
+            <div class="shop-item" onclick="buyItem('shield')"><b>🥧</b>Anti-TNT (12p)</div>
+            <div class="shop-item" onclick="buyItem('guide')"><b>🍯</b>Guide (30p)</div>
+        </div>
+        <div id="status-bar"></div>
+    </div>
+
+    <div id="stick-container" style="display:none"><div id="stick"></div></div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const statusEl = document.getElementById('status-bar');
+
+    let score = 0, level = 1, timeLeft = 80, isRunning = false;
+    let gridSize = 15, cellSize = 32;
+    let player = { x: 40, y: 40, radius: 10, speed: 2 };
+    let maze = [], items = [], timerInterval;
+    
+    // Power-ups
+    let powers = { speed: 0, shield: 0, guide: false };
+
+    // Thumbstick Logic
+    let stick = { active: false, x: 0, y: 0, moveX: 0, moveY: 0 };
+    const stickCont = document.getElementById('stick-container');
+    const stickKnob = document.getElementById('stick');
+
+    function setupInput() {
+        window.addEventListener('touchstart', e => {
+            if(e.target.closest('#stick-container')) stick.active = true;
+        });
+        window.addEventListener('touchmove', e => {
+            if(!stick.active) return;
+            let touch = e.touches[0];
+            let rect = stickCont.getBoundingClientRect();
+            let centerX = rect.left + rect.width/2;
+            let centerY = rect.top + rect.height/2;
+            let dx = touch.clientX - centerX;
+            let dy = touch.clientY - centerY;
+            let dist = Math.min(Math.sqrt(dx*dx + dy*dy), 40);
+            let angle = Math.atan2(dy, dx);
+            stick.moveX = (Math.cos(angle) * dist) / 40;
+            stick.moveY = (Math.sin(angle) * dist) / 40;
+            stickKnob.style.left = (Math.cos(angle) * dist) + 'px';
+            stickKnob.style.top = (Math.sin(angle) * dist) + 'px';
+        });
+        window.addEventListener('touchend', () => {
+            stick.active = false;
+            stick.moveX = 0; stick.moveY = 0;
+            stickKnob.style.left = '0px'; stickKnob.style.top = '0px';
+        });
+    }
+
+    function buyItem(type) {
+        if(type === 'speed' && score >= 10) { score -= 10; powers.speed = 20; }
+        if(type === 'shield' && score >= 12) { score -= 12; powers.shield = 30; }
+        if(type === 'guide' && score >= 30) { score -= 30; powers.guide = true; }
+        document.getElementById('score').innerText = score;
+    }
+
+    function generateMaze(size) {
+        maze = Array(size).fill().map(() => Array(size).fill(1));
+        function carve(x, y) {
+            const dirs = [[0,1],[0,-1],[1,0],[-1,0]].sort(() => Math.random() - 0.5);
+            maze[y][x] = 0;
+            for (let [dx, dy] of dirs) {
+                let nx = x + dx*2, ny = y + dy*2;
+                if (nx > 0 && nx < size-1 && ny > 0 && ny < size-1 && maze[ny][nx] === 1) {
+                    maze[y+dy][x+dx] = 0; carve(nx, ny);
+                }
+            }
+        }
+        carve(1, 1);
+        maze[size-2][size-2] = 9; // Exit
+
+        items = [];
+        for(let y=1; y<size-1; y++) {
+            for(let x=1; x<size-1; x++) {
+                if(maze[y][x] === 0 && !(x===1 && y===1)) {
+                    let r = Math.random();
+                    if(r < 0.08) items.push({x: x*cellSize + cellSize/2, y: y*cellSize + cellSize/2, type: r < 0.01 ? 6 : (r < 0.04 ? 4 : 2)});
+                }
+            }
+        }
+    }
+
+    function checkCollision(nx, ny) {
+        let gridX = Math.floor(nx / cellSize);
+        let gridY = Math.floor(ny / cellSize);
+        let padding = 6;
+        let checks = [
+            {x: nx - padding, y: ny - padding},
+            {x: nx + padding, y: ny - padding},
+            {x: nx - padding, y: ny + padding},
+            {x: nx + padding, y: ny + padding}
+        ];
+        return checks.every(p => {
+            let gx = Math.floor(p.x / cellSize);
+            let gy = Math.floor(p.y / cellSize);
+            return maze[gy] && maze[gy][gx] !== 1;
+        });
+    }
+
+    function update() {
+        if(!isRunning) return;
+        let curSpeed = (powers.speed > 0) ? player.speed * 1.8 : player.speed;
+        let nextX = player.x + stick.moveX * curSpeed;
+        let nextY = player.y + stick.moveY * curSpeed;
+
+        if(checkCollision(nextX, player.y)) player.x = nextX;
+        if(checkCollision(player.x, nextY)) player.y = nextY;
+
+        // Item Pickup
+        items = items.filter(it => {
+            let d = Math.sqrt((player.x - it.x)**2 + (player.y - it.y)**2);
+            if(d < 15) {
+                if(it.type === 2) score += 1;
+                if(it.type === 4 && powers.shield <= 0) score -= 3;
+                if(it.type === 6) score += 5;
+                document.getElementById('score').innerText = score;
+                return false;
+            }
+            return true;
+        });
+
+        // Exit Check
+        let gx = Math.floor(player.x/cellSize), gy = Math.floor(player.y/cellSize);
+        if(maze[gy][gx] === 9) nextLevel();
+
+        // Update Timers
+        if(powers.speed > 0) powers.speed -= 1/60;
+        if(powers.shield > 0) powers.shield -= 1/60;
+        
+        let status = "";
+        if(powers.speed > 0) status += `⚡ Speed: ${Math.ceil(powers.speed)}s `;
+        if(powers.shield > 0) status += `🛡️ Shield: ${Math.ceil(powers.shield)}s `;
+        statusEl.innerText = status;
+
+        draw();
+        requestAnimationFrame(update);
+    }
+
+    function draw() {
+        ctx.clearRect(0,0, canvas.width, canvas.height);
+        for(let y=0; y<gridSize; y++) {
+            for(let x=0; x<gridSize; x++) {
+                let rx = x*cellSize, ry = y*cellSize;
+                if(maze[y][x] === 1) { ctx.fillStyle = '#143317'; ctx.fillRect(rx, ry, cellSize, cellSize); }
+                else if(maze[y][x] === 9) { ctx.font = '20px serif'; ctx.fillText('🏰', rx+5, ry+25); }
+                else if(powers.guide && maze[y][x] === 0) { // Simple pathfinding highlight could go here
+                    ctx.fillStyle = '#1a1a1a'; ctx.fillRect(rx, ry, cellSize, cellSize);
+                }
+            }
+        }
+        items.forEach(it => {
+            ctx.font = '18px serif';
+            ctx.fillText(it.type === 2 ? '☕' : (it.type === 4 ? '🧨' : '🍲'), it.x-10, it.y+8);
+        });
+
+        // Character
+        ctx.font = '14px serif';
+        ctx.fillText('🤴🏻', player.x-8, player.y-2);
+        ctx.fillText('🇬🇧', player.x-8, player.y+10);
+
+        // Radial Fog
+        ctx.save();
+        ctx.globalCompositeOperation = 'destination-in';
+        let grad = ctx.createRadialGradient(player.x, player.y, 20, player.x, player.y, 120);
+        grad.addColorStop(0, 'black'); grad.addColorStop(1, 'transparent');
+        ctx.fillStyle = grad; ctx.fillRect(0,0, canvas.width, canvas.height);
+        ctx.restore();
+    }
+
+    function startGame() {
+        document.getElementById('menu').style.display='none';
+        document.getElementById('game-ui').style.display='block';
+        stickCont.style.display='flex';
+        level=1; score=0; gridSize=15; isRunning=true;
+        initRound(); setupInput(); update();
+        startTimer();
+    }
+
+    function initRound() {
+        cellSize = 340 / gridSize;
+        canvas.width = 340; canvas.height = 340;
+        player.x = cellSize * 1.5; player.y = cellSize * 1.5;
+        powers.guide = false;
+        generateMaze(gridSize);
+        document.getElementById('level').innerText = level;
+    }
+
+    function nextLevel() { level++; gridSize += 2; initRound(); timeLeft += 30; }
+    function restartRound() {
+        document.getElementById('fail-menu').style.display='none';
+        isRunning = true; timeLeft = 80; startTimer();
+    }
+
+    function startTimer() {
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            if(!isRunning) return;
+            timeLeft--;
+            document.getElementById('timer').innerText = timeLeft;
+            if(timeLeft <= 0) { 
+                isRunning = false; 
+                document.getElementById('fail-menu').style.display='block';
+            }
+        }, 1000);
+    }
+</script>
+</body>
+</html>
