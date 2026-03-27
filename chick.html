@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Cakebatory</title>
+    <style>
+        :root {
+            --cake-color: #e3c4a8;
+            --table-color: #5d3a1a;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(to bottom, #a0d8ef 0%, #ddf1f9 60%, #5d3a1a 60.1%);
+            font-family: 'Segoe UI', sans-serif;
+            overflow: hidden;
+            align-items: center;
+        }
+
+        /* The 40% Table Block */
+        .table-block {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 40%;
+            background: var(--table-color);
+            border-top: 10px solid #4a2e15;
+            box-shadow: inset 0 20px 40px rgba(0,0,0,0.4);
+            z-index: 1;
+        }
+
+        /* 3D Cake Container */
+        .cake-zone {
+            position: absolute;
+            bottom: 40%; /* Sits exactly on the table line */
+            width: 300px;
+            height: 200px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            perspective: 1000px;
+            z-index: 5;
+        }
+
+        .cake-3d {
+            position: relative;
+            width: 220px;
+            height: 140px;
+            background: var(--cake-color);
+            border-radius: 10px 10px 5px 5px;
+            transform-style: preserve-3d;
+            box-shadow: 15px 10px 30px rgba(0,0,0,0.3);
+            transition: background-color 0.5s, opacity 0.3s;
+        }
+
+        /* Toppings Layering */
+        .decor {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            pointer-events: none;
+            display: none;
+        }
+        .pos-1 { top: -35px; font-size: 40px; z-index: 15; text-shadow: 2px 2px 5px rgba(0,0,0,0.2); }
+        .pos-2 { top: 15px; display: none; justify-content: space-around; font-size: 25px; z-index: 10; }
+        .trim { bottom: 0; height: 15px; border-bottom: 12px dotted rgba(255,255,255,0.8); width: 100%; }
+
+        /* The Creature - Hidden under table height */
+        #chick {
+            position: absolute;
+            bottom: -300px; /* Start way below */
+            font-size: 200px;
+            z-index: 3; /* Behind cake, in front of table background */
+            transition: bottom 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
+        }
+
+        /* UI Panel - High Z-Index so chick doesn't block it */
+        .ui-panel {
+            position: relative;
+            z-index: 100;
+            margin-top: 50px;
+            text-align: center;
+            background: rgba(255,255,255,0.9);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .options { display: none; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 15px 0; }
+        
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            background: #ff6f61;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #d45045;
+        }
+        button:active { transform: translateY(4px); box-shadow: none; }
+        button:disabled { background: #ccc; box-shadow: 0 4px 0 #999; }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div class="ui-panel">
+        <h1 id="title">Cakebatory</h1>
+        <button id="play-btn">START EXPERIMENT</button>
+
+        <div id="step-1" class="options">
+            <button onclick="setFrosting('#5d3a1a', this)">Dark Choc</button>
+            <button onclick="setFrosting('#8b4513', this)">Chocolate</button>
+            <button onclick="setFrosting('#ffb7c5', this)">Strawberry</button>
+            <button onclick="setFrosting('#fff9e3', this)">Vanilla</button>
+            <button onclick="setFrosting('#9dc183', this)">Matcha</button>
+        </div>
+
+        <div id="step-2" class="options">
+            <button onclick="toggleItem('trim')">Add Cream Trim</button>
+        </div>
+
+        <div id="step-3" class="options">
+            <button onclick="toggleItem('cherry1')">Cherry (1)</button>
+            <button onclick="toggleItem('cherry2')">Cherry (2)</button>
+            <button onclick="toggleItem('choc1')">Choc Bar (1)</button>
+            <button onclick="toggleItem('choc2')">Choc Bar (2)</button>
+            <button onclick="toggleItem('cookie1')">Cookie (1)</button>
+            <button onclick="toggleItem('cookie2')">Cookie (2)</button>
+            <button onclick="toggleItem('straw1')">Strawberry (1)</button>
+            <button onclick="toggleItem('straw2')">Strawberry (2)</button>
+        </div>
+
+        <div id="restart-area" class="hidden">
+            <p><strong>The creature loves the cake</strong></p>
+            <button onclick="location.reload()">RESTART</button>
+        </div>
+        
+        <button id="next-btn" class="hidden">Next ➔</button>
+    </div>
+
+    <div class="cake-zone">
+        <div id="chick">🐥</div>
+        <div class="cake-3d" id="cake">
+            <div id="trim" class="decor trim"></div>
+            <div id="cherry1" class="decor pos-1">🍒</div>
+            <div id="choc1" class="decor pos-1">🍫</div>
+            <div id="cookie1" class="decor pos-1">🍪</div>
+            <div id="straw1" class="decor pos-1">🍓</div>
+            <div id="cherry2" class="decor pos-2"><span>🍒</span><span>🍒</span><span>🍒</span></div>
+            <div id="choc2" class="decor pos-2"><span>🍫</span><span>🍫</span><span>🍫</span></div>
+            <div id="cookie2" class="decor pos-2"><span>🍪</span><span>🍪</span><span>🍪</span></div>
+            <div id="straw2" class="decor pos-2"><span>🍓</span><span>🍓</span><span>🍓</span></div>
+        </div>
+    </div>
+
+    <div class="table-block"></div>
+
+    <script>
+        const playBtn = document.getElementById('play-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const title = document.getElementById('title');
+        let step = 0;
+
+        playBtn.onclick = () => {
+            playBtn.classList.add('hidden');
+            nextBtn.classList.remove('hidden');
+            moveStep(1);
+        };
+
+        nextBtn.onclick = () => {
+            step++;
+            if(step === 2) moveStep(2);
+            else if(step === 3) moveStep(3);
+            else finish();
+        };
+
+        function moveStep(s) {
+            step = s;
+            document.querySelectorAll('.options').forEach(o => o.style.display = 'none');
+            document.getElementById(`step-${s}`).style.display = 'flex';
+            if(s === 1) title.innerText = "Pick your base frosting";
+            if(s === 2) title.innerText = "Add the trim?";
+            if(s === 3) title.innerText = "Final Decorations";
+        }
+
+        function setFrosting(color, btn) {
+            document.documentElement.style.setProperty('--cake-color', color);
+            document.querySelectorAll('#step-1 button').forEach(b => b.disabled = true);
+            btn.style.outline = "4px solid white";
+        }
+
+        function toggleItem(id) {
+            const el = document.getElementById(id);
+            const isAround = id.includes('2');
+            el.style.display = (el.style.display === (isAround ? 'flex' : 'block')) ? 'none' : (isAround ? 'flex' : 'block');
+        }
+
+        function finish() {
+            nextBtn.classList.add('hidden');
+            document.querySelectorAll('.options').forEach(o => o.style.display = 'none');
+            title.innerText = "Observing...";
+
+            const chick = document.getElementById('chick');
+            const cake = document.getElementById('cake');
+
+            // Chick lunges from under the table!
+            setTimeout(() => {
+                chick.style.bottom = "40%"; // Reaches the top of the table
+                setTimeout(() => {
+                    cake.style.opacity = "0"; // Eaten!
+                    setTimeout(() => {
+                        chick.style.bottom = "-300px"; // Back down
+                        document.getElementById('restart-area').classList.remove('hidden');
+                        title.classList.add('hidden');
+                    }, 700);
+                }, 500);
+            }, 500);
+        }
+    </script>
+</body>
+</html>
