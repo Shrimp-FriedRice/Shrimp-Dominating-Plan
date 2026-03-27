@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Shrimp</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: #0077be; /* Deep Ocean Blue */
+            font-family: 'Courier New', Courier, monospace;
+            color: white;
+        }
+
+        #game-container {
+            position: relative;
+            border: 4px solid #fff;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        canvas {
+            display: block;
+            background: linear-gradient(#1e90ff, #0077be);
+        }
+
+        #ui {
+            position: absolute;
+            top: 20px;
+            text-align: center;
+            width: 100%;
+            pointer-events: none;
+        }
+
+        .instructions {
+            margin-top: 10px;
+            font-size: 1.2rem;
+            text-shadow: 2px 2px #000;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="ui">
+            <h1 id="score">0</h1>
+        </div>
+        <canvas id="gameCanvas" width="400" height="600"></canvas>
+    </div>
+    
+    <div class="instructions">Press <b>SPACE</b> or <b>CLICK</b> to Swim Up!</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreElement = document.getElementById('score');
+
+    // Game Constants
+    const GRAVITY = 0.25;
+    const FLAP = -5.5;
+    const SPAWN_RATE = 90; // Frames between pipes
+    const PIPE_WIDTH = 60;
+    const PIPE_GAP = 160;
+
+    // Game State
+    let shrimp = { x: 50, y: 300, velocity: 0, size: 35 };
+    let pipes = [];
+    let frame = 0;
+    let score = 0;
+    let gameActive = true;
+
+    function createPipe() {
+        const minPipeHeight = 50;
+        const maxPipeHeight = canvas.height - PIPE_GAP - minPipeHeight;
+        const topHeight = Math.floor(Math.random() * (maxPipeHeight - minPipeHeight + 1)) + minPipeHeight;
+        
+        pipes.push({
+            x: canvas.width,
+            top: topHeight,
+            passed: false
+        });
+    }
+
+    function resetGame() {
+        shrimp = { x: 50, y: 300, velocity: 0, size: 35 };
+        pipes = [];
+        score = 0;
+        frame = 0;
+        gameActive = true;
+        scoreElement.innerText = score;
+    }
+
+    function update() {
+        if (!gameActive) return;
+
+        // Shrimp Physics
+        shrimp.velocity += GRAVITY;
+        shrimp.y += shrimp.velocity;
+
+        // Ceiling and Floor collision
+        if (shrimp.y + shrimp.size > canvas.height || shrimp.y < 0) {
+            gameActive = false;
+        }
+
+        // Pipe Logic
+        if (frame % SPAWN_RATE === 0) createPipe();
+
+        pipes.forEach((pipe, index) => {
+            pipe.x -= 3; // Pipe speed
+
+            // Collision Detection
+            const shrimpRight = shrimp.x + shrimp.size - 5;
+            const shrimpLeft = shrimp.x + 5;
+            const shrimpTop = shrimp.y + 5;
+            const shrimpBottom = shrimp.y + shrimp.size - 5;
+
+            if (shrimpRight > pipe.x && shrimpLeft < pipe.x + PIPE_WIDTH) {
+                if (shrimpTop < pipe.top || shrimpBottom > pipe.top + PIPE_GAP) {
+                    gameActive = false;
+                }
+            }
+
+            // Score point
+            if (!pipe.passed && shrimp.x > pipe.x + PIPE_WIDTH) {
+                score++;
+                scoreElement.innerText = score;
+                pipe.passed = true;
+            }
+
+            // Remove off-screen pipes
+            if (pipe.x + PIPE_WIDTH < 0) pipes.splice(index, 1);
+        });
+
+        frame++;
+    }
+
+    function draw() {
+        // Clear background
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw Pipes (Seaweed)
+        pipes.forEach(pipe => {
+            ctx.fillStyle = "#2d5a27"; // Dark Green Seaweed
+            // Top Seaweed
+            ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.top);
+            // Bottom Seaweed
+            ctx.fillRect(pipe.x, pipe.top + PIPE_GAP, PIPE_WIDTH, canvas.height);
+            
+            // Add some "leafy" details
+            ctx.fillStyle = "#3e7d37";
+            ctx.fillRect(pipe.x - 5, pipe.top - 20, PIPE_WIDTH + 10, 20);
+            ctx.fillRect(pipe.x - 5, pipe.top + PIPE_GAP, PIPE_WIDTH + 10, 20);
+        });
+
+        // Draw Shrimp
+        ctx.font = `${shrimp.size}px Arial`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("🍤", shrimp.x + (shrimp.size/2), shrimp.y + (shrimp.size/2));
+
+        if (!gameActive) {
+            ctx.fillStyle = "rgba(0,0,0,0.5)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "white";
+            ctx.font = "30px Arial";
+            ctx.fillText("GAME OVER", canvas.width/2, canvas.height/2);
+            ctx.font = "20px Arial";
+            ctx.fillText("Click to Restart", canvas.width/2, canvas.height/2 + 40);
+        }
+    }
+
+    function loop() {
+        update();
+        draw();
+        requestAnimationFrame(loop);
+    }
+
+    // Controls
+    const flapAction = () => {
+        if (gameActive) {
+            shrimp.velocity = FLAP;
+        } else {
+            resetGame();
+        }
+    };
+
+    window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') flapAction();
+    });
+
+    canvas.addEventListener('mousedown', flapAction);
+
+    loop();
+</script>
+</body>
+</html>
