@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shrimp-y Road</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: #2ecc71; /* Grass background */
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            color: white;
+        }
+
+        #game-info {
+            position: absolute;
+            top: 20px;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        #canvas-container {
+            border: 5px solid #fff;
+            box-shadow: 0 0 50px rgba(0,0,0,0.3);
+            background: #27ae60;
+        }
+
+        .controls-hint {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            background: rgba(0,0,0,0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-info">
+        <h1>Shrimp-y Road</h1>
+        <h2 id="score">Score: 0</h2>
+    </div>
+
+    <div id="canvas-container">
+        <canvas id="gameCanvas" width="500" height="600"></canvas>
+    </div>
+
+    <div class="controls-hint">Use <b>Arrow Keys</b> or <b>WASD</b> to move!</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreElement = document.getElementById('score');
+
+    const GRID = 50;
+    const ROWS = canvas.height / GRID;
+    const COLS = canvas.width / GRID;
+
+    let score = 0;
+    let highScore = 0;
+
+    // Player Object
+    const player = {
+        x: Math.floor(COLS / 2) * GRID,
+        y: (ROWS - 1) * GRID,
+        char: "🍤",
+        reset() {
+            this.x = Math.floor(COLS / 2) * GRID;
+            this.y = (ROWS - 1) * GRID;
+        }
+    };
+
+    // Lane Types: 0 = Grass, 1 = Road (Car), 2 = Water (Logs/Boats)
+    const laneTypes = [0, 1, 1, 0, 2, 2, 1, 0, 1, 1, 0, 0];
+    const lanes = [];
+
+    class Lane {
+        constructor(y, type) {
+            this.y = y;
+            this.type = type; // 0: Grass, 1: Road, 2: Water
+            this.objects = [];
+            this.speed = (Math.random() * 2 + 1) * (Math.random() < 0.5 ? 1 : -1);
+            
+            if (type !== 0) {
+                // Initial objects
+                for (let i = 0; i < 3; i++) {
+                    this.objects.push({
+                        x: i * 200 + Math.random() * 100,
+                        width: type === 1 ? 60 : 100,
+                        char: type === 1 ? "🦐" : "🛶"
+                    });
+                }
+            }
+        }
+
+        update() {
+            this.objects.forEach(obj => {
+                obj.x += this.speed;
+                if (this.speed > 0 && obj.x > canvas.width) obj.x = -obj.width;
+                if (this.speed < 0 && obj.x < -obj.width) obj.x = canvas.width;
+            });
+        }
+
+        draw() {
+            // Draw lane background
+            if (this.type === 1) ctx.fillStyle = "#34495e"; // Road
+            else if (this.type === 2) ctx.fillStyle = "#3498db"; // Water
+            else ctx.fillStyle = "#2ecc71"; // Grass
+            
+            ctx.fillRect(0, this.y, canvas.width, GRID);
+            
+            // Draw lane lines for road
+            if (this.type === 1) {
+                ctx.strokeStyle = "rgba(255,255,255,0.3)";
+                ctx.setLineDash([10, 1
+
