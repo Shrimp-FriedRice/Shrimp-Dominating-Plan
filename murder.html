@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shrimp Hunter Pro</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #1a1a1a;
+            color: white;
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+        }
+
+        h1 {
+            color: #ff4757;
+            letter-spacing: 5px;
+            margin-bottom: 10px;
+        }
+
+        #game-box {
+            position: relative;
+            width: 800px;
+            height: 500px;
+            background-color: #2f3542;
+            border: 4px solid #ff4757;
+            border-radius: 8px;
+            cursor: none; /* Hide real cursor to use the shrimp */
+            overflow: hidden;
+        }
+
+        .shrimp {
+            position: absolute;
+            font-size: 40px;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none; /* Prevents cursor interference */
+        }
+
+        #player-shrimp {
+            z-index: 999;
+            filter: drop-shadow(0 0 15px #ffa502);
+            transform-origin: center;
+        }
+
+        .blood-splat {
+            position: absolute;
+            font-size: 20px;
+            opacity: 0.6;
+            animation: fadeOut 1s forwards;
+        }
+
+        @keyframes fadeOut {
+            to { opacity: 0; transform: scale(2); }
+        }
+
+        #ui {
+            margin-top: 15px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>KILL THEM ALL</h1>
+
+    <div id="game-box">
+        <div id="player-shrimp" class="shrimp">🍤</div>
+    </div>
+
+    <div id="ui">Victims Consumed: <span id="score">0</span></div>
+
+    <script>
+        const box = document.getElementById('game-box');
+        const player = document.getElementById('player-shrimp');
+        const scoreDisplay = document.getElementById('score');
+        
+        let score = 0;
+        let victims = [];
+        const victimPop = 12;
+
+        // Player Tracking
+        let pX = 400, pY = 250;
+        box.addEventListener('mousemove', (e) => {
+            const rect = box.getBoundingClientRect();
+            pX = e.clientX - rect.left;
+            pY = e.clientY - rect.top;
+        });
+
+        function createVictim() {
+            const el = document.createElement('div');
+            el.className = 'shrimp';
+            el.innerHTML = '🍤';
+            box.appendChild(el);
+            
+            return {
+                el: el,
+                x: Math.random() * (box.clientWidth - 50),
+                y: Math.random() * (box.clientHeight - 50),
+                vx: (Math.random() - 0.5) * 6,
+                vy: (Math.random() - 0.5) * 6
+            };
+        }
+
+        function populate() {
+            for (let i = 0; i < victimPop; i++) {
+                victims.push(createVictim());
+            }
+        }
+
+        function gameLoop() {
+            // Update Player Visuals
+            player.style.left = (pX - 25) + 'px';
+            player.style.top = (pY - 25) + 'px';
+
+            for (let i = victims.length - 1; i >= 0; i--) {
+                let v = victims[i];
+
+                // Simple AI: Move away from player if close
+                const dx = v.x - pX;
+                const dy = v.y - pY;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+
+                if (dist < 100) {
+                    v.vx += dx * 0.05;
+                    v.vy += dy * 0.05;
+                }
+
+                // Apply friction/speed limit
+                v.vx *= 0.98;
+                v.vy *= 0.98;
+
+                // Move
+                v.x += v.vx;
+                v.y += v.vy;
+
+                // Wall Bounce
+                if (v.x < 0 || v.x > box.clientWidth - 50) v.vx *= -1;
+                if (v.y < 0 || v.y > box.clientHeight - 50) v.vy *= -1;
+
+                v.el.style.left = v.x + 'px';
+                v.el.style.top = v.y + 'px';
+
+                // COLLISION DETECTION (The Killing Part)
+                // If player is within 35 pixels of a victim...
+                if (dist < 35) {
+                    // Create a "splat" effect
+                    const splat = document.createElement('div');
+                    splat.className = 'blood-splat';
+                    splat.innerHTML = '💥';
+                    splat.style.left = v.x + 'px';
+                    splat.style.top = v.y + 'px';
+                    box.appendChild(splat);
+                    setTimeout(() => splat.remove(), 1000);
+
+                    // Remove victim
+                    box.removeChild(v.el);
+                    victims.splice(i, 1);
+                    
+                    // Update Score
+                    score++;
+                    scoreDisplay.innerText = score;
+                }
+            }
+
+            // Respawn logic
+            if (victims.length === 0) {
+                populate();
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        populate();
+        gameLoop();
+    </script>
+</body>
+</html>
