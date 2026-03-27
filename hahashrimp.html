@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>The Crispy Gauntlet</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #1a1a1a;
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* The Victim */
+        #shrimp-stage {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #shrimp {
+            font-size: 100px;
+            transition: transform 0.1s;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .shake {
+            animation: shake 0.2s infinite;
+        }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            20% { transform: translate(-3px, 0px) rotate(-5deg); }
+            40% { transform: translate(3px, 2px) rotate(5deg); }
+            60% { transform: translate(-3px, 1px) rotate(-1deg); }
+            80% { transform: translate(3px, -2px) rotate(1deg); }
+            100% { transform: translate(1px, -1px) rotate(0deg); }
+        }
+
+        /* Feedback Effects */
+        .effect {
+            position: absolute;
+            pointer-events: none;
+            font-size: 40px;
+            animation: fadeUp 0.5s forwards;
+            z-index: 10;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-100px); }
+        }
+
+        /* Touchscreen Weapon Bar */
+        #weapon-bar {
+            position: absolute;
+            bottom: 20px;
+            display: flex;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .weapon-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            background: #333;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .weapon-btn.active {
+            background: #ff4757;
+            transform: scale(1.2);
+            border: 2px solid white;
+        }
+
+        #status-text {
+            position: absolute;
+            top: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #ff4757;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="status-text">Selected: Hammer</div>
+    
+    <div id="shrimp-stage">
+        <div id="shrimp">🍤</div>
+    </div>
+
+    <div id="weapon-bar">
+        <button class="weapon-btn active" onclick="setWeapon('🔨', 'Hammer', '💥')" title="Hammer">🔨</button>
+        <button class="weapon-btn" onclick="setWeapon('🔥', 'Flamethrower', '♨️')" title="Fire">🔥</button>
+        <button class="weapon-btn" onclick="setWeapon('⚡', 'Taser', '✨')" title="Shock">⚡</button>
+        <button class="weapon-btn" onclick="setWeapon('🍴', 'Fork', '🩸')" title="Fork">🍴</button>
+        <button class="weapon-btn" onclick="setWeapon('🍋', 'Lemon Juice', '💦')" title="Lemon">🍋</button>
+    </div>
+</div>
+
+<script>
+    let currentWeaponEmoji = '💥';
+    let currentWeaponName = 'Hammer';
+
+    const shrimp = document.getElementById('shrimp');
+    const statusText = document.getElementById('status-text');
+    const buttons = document.querySelectorAll('.weapon-btn');
+
+    function setWeapon(btnIcon, name, effect) {
+        currentWeaponEmoji = effect;
+        currentWeaponName = name;
+        statusText.innerText = `Selected: ${name}`;
+        
+        // Update UI
+        buttons.forEach(btn => {
+            btn.classList.remove('active');
+            if(btn.innerText === btnIcon) btn.classList.add('active');
+        });
+    }
+
+    // Interaction Logic
+    function applyDamage(e) {
+        // Prevent default zoom/scroll on mobile
+        if(e.type === 'touchstart') e.preventDefault();
+
+        // Visual Shake
+        shrimp.classList.add('shake');
+        setTimeout(() => shrimp.classList.remove('shake'), 200);
+
+        // Create Effect Emoji
+        const effect = document.createElement('div');
+        effect.className = 'effect';
+        effect.innerText = currentWeaponEmoji;
+        
+        // Position effect near touch/click
+        const rect = shrimp.getBoundingClientRect();
+        effect.style.left = `50%`;
+        effect.style.top = `40%`;
+        
+        document.getElementById('shrimp-stage').appendChild(effect);
+        
+        // Remove after animation
+        setTimeout(() => effect.remove(), 500);
+    }
+
+    shrimp.addEventListener('mousedown', applyDamage);
+    shrimp.addEventListener('touchstart', applyDamage);
+
+</script>
+
+</body>
+</html>
