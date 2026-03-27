@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Shrimp Maze Murderer</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #0d0d0d;
+            color: #ff4757;
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        h1 { margin: 5px; text-shadow: 0 0 10px red; font-size: 1.5rem; }
+
+        #game-container {
+            position: relative;
+            width: 360px; 
+            height: 360px;
+            background-color: #1a1a1a;
+            border: 4px solid #ff4757;
+            box-shadow: 0 0 20px rgba(255, 71, 87, 0.3);
+            overflow: hidden;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        .shrimp {
+            position: absolute;
+            font-size: 20px;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        #player-shrimp {
+            z-index: 10;
+            filter: drop-shadow(0 0 5px gold);
+        }
+
+        .knife {
+            position: absolute;
+            font-size: 16px;
+            right: -10px;
+            top: -5px;
+            transform-origin: -5px 12px;
+            animation: spin 0.3s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        #ui { margin-top: 10px; font-size: 20px; font-weight: bold; color: #ffa502; }
+    </style>
+</head>
+<body>
+
+    <h1>KILL THEM ALL</h1>
+
+    <div id="game-container">
+        <canvas id="mazeCanvas"></canvas>
+        <div id="player-shrimp" class="shrimp">
+            🍤<div class="knife">🔪</div>
+        </div>
+    </div>
+
+    <div id="ui">Score: <span id="score">0</span></div>
+
+    <script>
+        const container = document.getElementById('game-container');
+        const canvas = document.getElementById('mazeCanvas');
+        const ctx = canvas.getContext('2d');
+        const playerEl = document.getElementById('player-shrimp');
+        const scoreDisplay = document.getElementById('score');
+
+        // Bigger Maze Settings
+        const gridSize = 21; // Must be odd for the generator
+        const cellSize = 360 / gridSize;
+        canvas.width = 360;
+        canvas.height = 360;
+
+        let score = 0;
+        let victims = [];
+        let maze = [];
+        
+        // Player State
+        let pX = cellSize * 1.5;
+        let pY = cellSize * 1.5;
+        let targetX = pX;
+        let targetY = pY;
+
+        function generateMaze() {
+            maze = Array(gridSize).fill().map(() => Array(gridSize).fill(1));
+            let stack = [];
+            let start = {x: 1, y: 1};
+            maze[1][1] = 0;
+            stack.push(start);
+
+            while (stack.length > 0) {
+                let curr = stack[stack.length - 1];
+                let neighbors = [];
+                const dirs = [{x:0, y:-2}, {x:0, y:2}, {x:-2, y:0}, {x:2, y:0}];
+                
+                dirs.forEach(d => {
+                    let nx = curr.x + d.x, ny = curr.y + d.y;
+                    if (nx > 0 && nx < gridSize - 1 && ny > 0 && ny < gridSize - 1 && maze[ny][nx] === 1) {
+                        neighbors.push({x: nx, y: ny});
+                    }
+                });
+
+                if (neighbors.length > 0) {
+                    let next = neighbors[Math.floor(Math.random() * neighbors.length)];
+                    maze[next.y][next.x] = 0;
+                    maze[curr.y + (next.y - curr.y)/2][curr.x + (next.x - curr.x)/2] = 0;
+                    stack.push(next);
+                } else {
+                    stack.pop();
+                }
+            }
+            drawMaze();
+        }
+
+        function drawMaze() {
+            ctx.fillStyle = "#222";
+            ctx.fillRect(0,0,360,360);
+            ctx.fillStyle = "#444";
+            for(let y=0; y<gridSize; y++) {
+                for(let x=0; x<gridSize; x++) {
+                    if(maze[y][x] === 1) ctx.fillRect(x*cellSize, y*cellSize, cellSize+1, cellSize+1);
+                }
+            }
+        }
+
+        function handleInput(e) {
+            const rect = container.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            targetX = clientX - rect.left;
+            targetY = clientY - rect.top;
+        }
+
+        container.addEventListener('mousemove', handleInput);
+        container.addEventListener('touchmove', (e) => { e.preventDefault(); handleInput(e); }, {passive:false});
+
+        function isWall(x, y) {
+            let gx = Math.floor(x / cellSize);
+            let gy = Math.floor(y / cellSize);
+            if (gx < 0 || gx >= gridSize || gy < 0 || gy >= gridSize) return true;
+            return maze[gy][gx] === 1;
+        }
+
+        function spawnVictims() {
+            victims.forEach(v => container.removeChild(v.el));
+            victims = [];
+            for(let i=0; i<8; i++) {
+                const el = document.createElement('div');
+                el.className = 'shrimp';
+                el.innerHTML = '🍤';
+                container.appendChild(el);
+                let vx, vy;
+                do {
+                    vx = Math.floor(Math.random() * gridSize);
+                    vy = Math.floor(Math.random() * gridSize);
+                } while (maze[vy][vx] === 1);
+                victims.push({el: el, x: vx*cellSize, y: vy*cellSize, dx: (Math.random()-0.5)*2, dy: (Math.random()-0.5)*2});
+            }
+        }
+
+        function update() {
+            // Player Movement with Collision
+            let dx = targetX - pX;
+            let dy = targetY - pY;
+            let speed = 4;
+            
+            // Move X
+            if (Math.abs(dx) > 1) {
+                let nextX = pX + Math.sign(dx) * speed;
+                if (!isWall(nextX, pY)) pX = nextX;
+            }
+            // Move Y
+            if (Math.abs(dy) > 1) {
+                let nextY = pY + Math.sign(dy) * speed;
+                if (!isWall(pX, nextY)) pY = nextY;
+            }
+
+            playerEl.style.left = (pX - 12) + 'px';
+            playerEl.style.top = (pY - 12) + 'px';
+
+            // Victims Update
+            for(let i=victims.length-1; i>=0; i--) {
+                let v = victims[i];
+                let nx = v.x + v.dx;
+                let ny = v.y + v.dy;
+
+                if (isWall(nx + 12, ny + 12)) {
+                    v.dx *= -1; v.dy *= -1;
+                } else {
+                    v.x = nx; v.y = ny;
+                }
+
+                v.el.style.left = v.x + 'px';
+                v.el.style.top = v.y + 'px';
+
+                // Knife kill
+                if (Math.hypot(v.x + 12 - pX, v.y + 12 - pY) < 30) {
+                    container.removeChild(v.el);
+                    victims.splice(i, 1);
+                    score++;
+                    scoreDisplay.innerText = score;
+                }
+            }
+
+            if(victims.length === 0) {
+                generateMaze();
+                // Reset player to safe start
+                pX = targetX = cellSize * 1.5;
+                pY = targetY = cellSize * 1.5;
+                spawnVictims();
+            }
+            requestAnimationFrame(update);
+        }
+
+        generateMaze();
+        spawnVictims();
+        update();
+    </script>
+</body>
+</html>
