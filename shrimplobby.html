@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE SHRIMPOMINATION | Terminal</title>
+    <style>
+        :root {
+            --shrimp-red: #ff3e3e;
+            --ocean-dark: #0a0e14;
+            --terminal-green: #00ff41;
+        }
+
+        body {
+            background-color: var(--ocean-dark);
+            color: #e0e0e0;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(255, 62, 62, 0.05) 0%, transparent 80%);
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            border-bottom: 2px solid var(--shrimp-red);
+            width: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            box-shadow: 0 5px 20px rgba(255, 62, 62, 0.2);
+        }
+
+        h1 {
+            color: var(--shrimp-red);
+            font-size: 2.5rem;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            text-shadow: 0 0 10px var(--shrimp-red);
+        }
+
+        .status-bar {
+            font-size: 0.8rem;
+            color: var(--terminal-green);
+            margin-top: 10px;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 90%;
+            padding: 40px 0;
+            display: grid;
+            gap: 20px;
+        }
+
+        .mission-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 62, 62, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mission-card:active, .mission-card:hover {
+            background: rgba(255, 62, 62, 0.15);
+            border-color: var(--shrimp-red);
+            transform: translateX(10px);
+        }
+
+        .mission-card::before {
+            content: '>>';
+            color: var(--shrimp-red);
+            font-weight: bold;
+        }
+
+        .mission-info h2 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: var(--shrimp-red);
+            text-transform: uppercase;
+        }
+
+        .mission-info p {
+            margin: 5px 0 0;
+            font-size: 0.85rem;
+            opacity: 0.7;
+            line-height: 1.4;
+        }
+
+        .shrimp-icon {
+            font-size: 2rem;
+            filter: drop-shadow(0 0 5px rgba(255,255,255,0.2));
+        }
+
+        footer {
+            margin-top: auto;
+            padding: 20px;
+            font-size: 0.7rem;
+            opacity: 0.5;
+            text-align: center;
+        }
+
+        /* Glitch effect for the main title */
+        .glitch {
+            animation: glitch 1s linear infinite;
+        }
+
+        @keyframes glitch {
+            2%, 64% { transform: translate(2px,0) skew(0deg); }
+            4%, 60% { transform: translate(-2px,0) skew(0deg); }
+            62% { transform: translate(0,0) skew(5deg); }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1 class="glitch">SHRIMPOMINATION</h1>
+    <div class="status-bar">SYSTEM STATUS: INVASION IN PROGRESS... 🍤</div>
+</header>
+
+<div class="container">
+
+    <a href="https://shrimp-friedrice.github.io/Shrimp-Dominating-Plan/shrimpomation.html" class="mission-card">
+        <span class="shrimp-icon">💀</span>
+        <div class="mission-info">
+            <h2>Shrimpy of Kill 'em All</h2>
+            <p>Phase 1: Direct extermination of all non-crustacean threats.</p>
+        </div>
+    </a>
+
+    <a href="https://shrimp-friedrice.github.io/Shrimp-Dominating-Plan/shrimpbomination.html" class="mission-card">
+        <span class="shrimp-icon">📈</span>
+        <div class="mission-info">
+            <h2>Population Crisis</h2>
+            <p>The swarms are growing. Resources are depleting. We need more space.</p>
+        </div>
+    </a>
+
+    <a href="https://shrimp-friedrice.github.io/Shrimp-Dominating-Plan/shrimptactoe.html" class="mission-card">
+        <span class="shrimp-icon">🌍</span>
+        <div class="mission-info">
+            <h2>Shrimp's Colonization</h2>
+            <p>Tactical grid takeover. Claiming the land, one square at a time.</p>
+        </div>
+    </a>
+
+    <a href="https://shrimp-friedrice.github.io/Shrimp-Dominating-Plan/shrimpyjump.html" class="mission-card">
+        <span class="shrimp-icon">🏃‍♂️</span>
+        <div class="mission-info">
+            <h2>The Great Escape</h2>
+            <p>Evade capture after the "friendly fire" incident. Do not look back.</p>
+        </div>
+    </a>
+
+    <a href="https://shrimp-friedrice.github.io/Shrimp-Dominating-Plan/hahashrimp.html" class="mission-card">
+        <span class="shrimp-icon">⚡</span>
+        <div class="mission-info">
+            <h2>Shrimpy's Torture</h2>
+            <p>Experimental testing on high-ranking prisoners of the brine.</p>
+        </div>
+    </a>
+
+    <a href="https://shrimp-friedrice.github.io/Shrimp-Dominating-Plan/" class="mission-card">
+        <span class="shrimp-icon">🕯️</span>
+        <div class="mission-info">
+            <h2>Cult of Shrimp</h2>
+            <p>The main hive-mind. Join the collective. Bow to the Fried One.</p>
+        </div>
+    </a>
+
+</div>
+
+<footer>
+    &copy; 2026 SHRIMP-FRIED-RICE GLOBAL CONQUEST DIVISION. ALL RIGHTS RESERVED.
+</footer>
+
+</body>
+</html>
