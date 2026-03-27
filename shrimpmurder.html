@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shrimp City: Purge</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #00050a;
+            color: #ff3300;
+            font-family: 'Arial Black', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #ui-layer {
+            text-align: center;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        h1 {
+            font-size: 60px;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 8px;
+            transition: 0.1s;
+        }
+
+        .score-container {
+            color: #00d4ff;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        #game-wrapper {
+            position: relative;
+            border: 6px solid #1a1a1a;
+            box-shadow: 0 0 50px rgba(255, 0, 0, 0.2);
+        }
+
+        canvas
