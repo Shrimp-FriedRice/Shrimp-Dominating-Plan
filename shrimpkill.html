@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Shrimp Maze Murder</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #000;
+            color: #ff4757;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        h1 { margin: 5px; text-shadow: 0 0 10px red; }
+
+        #game-container {
+            position: relative;
+            width: 360px; /* Adjusted for maze math (cols * size) */
+            height: 360px;
+            background-color: #111;
+            border: 4px solid #444;
+            overflow: hidden;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .shrimp {
+            position: absolute;
+            font-size: 24px;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        #player-shrimp {
+            z-index: 10;
+            transition: transform 0.05s linear;
+        }
+
+        .knife {
+            position: absolute;
+            font-size: 20px;
+            top: -15px;
+            left: 20px;
+            transform-origin: -10px 25px;
+            animation: spin 0.5s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform
