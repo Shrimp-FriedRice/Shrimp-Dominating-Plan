@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Royal Mist Maze</title>
+    <style>
+        :root { --gold: #ffd700; --royal-blue: #002366; }
+        body {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; margin: 0; background-color: #050505;
+            font-family: 'Segoe UI', sans-serif; color: white; overflow: hidden; touch-action: manipulation;
+        }
+        /* Fixed UI Header */
+        #ui-header {
+            width: 100%; max-width: 500px; display: flex; justify-content: space-around;
+            padding: 15px; background: var(--royal-blue); border-bottom: 3px solid var(--gold);
+            font-weight: bold; font-size: 1.2rem; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            z-index: 100; position: fixed; top: 0;
+        }
+        #game-container { position: relative; margin-top: 80px; border: 2px solid #444; }
+        canvas { display: block; background: #000; cursor: crosshair; }
+        
+        #menu { text-align: center; z-index: 200; padding: 30px; background: #1a1a1a; border: 4px solid var(--gold); border-radius: 15px; }
+        button { padding: 15px 40px; font-size: 24px; cursor: pointer; background: var(--gold); border: none; border-radius: 8px; font-weight: bold; color: black; }
+
+        /* Touch Controls */
+        #controls {
+            display: none; grid-template-columns: repeat(3, 70px); grid-template-rows: repeat(2, 70px);
+            gap: 15px; margin-top: 20px; padding-bottom: 20px;
+        }
+        .btn {
+            width: 70px; height: 70px; background: rgba(255,255,255,0.1);
+            border: 2px solid var(--gold); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-size: 28px;
+            user-select: none; -webkit-tap-highlight-color: transparent;
+        }
+        .up { grid-column: 2; }
+        .left { grid-column: 1; grid-row: 2; }
+        .down { grid-column: 2; grid-row: 2; }
+        .right { grid-column: 3; grid-row: 2; }
+    </style>
+</head>
+<body>
+
+    <div id="ui-header" style="display: none;">
+        <span>Score: <span id="score">0</span></span>
+        <span>Lvl: <span id="level">1</span></span>
+        <span>⏱ <span id="timer">40</span>s</span>
+    </div>
+
+    <div id="menu">
+        <h1 style="margin-top:0">🤴🏻 Royal Fog 🇬🇧</h1>
+        <p>Stew (🍲) is rare (+5).<br>Dynamite (🧨) guards the dead-ends!</p>
+        <button onclick="startGame()">START ADVENTURE</button>
+    </div>
+
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <div id="controls">
+        <div class="btn up" onpointerdown="movePlayer(0,-1)">▲</div>
+        <div class="btn left" onpointerdown="movePlayer(-1,0)">◀</div>
+        <div class="btn down" onpointerdown="movePlayer(0,1)">▼</div>
+        <div class="btn right" onpointerdown="movePlayer(1,0)">▶</div>
+    </div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    let score = 0, level = 1, timeLeft = 40;
+    let gridSize = 17; 
+    let cellSize = 25;
+    let player = { x: 1, y: 1 };
+    let maze = [];
+    let timerInterval;
+    const visibilityRadius = 4; // Requested 4 blocks
+
+    function generateMaze(size) {
+        maze = Array(size).fill().map(() => Array(size).fill(1));
+        function carve(x, y) {
+            const dirs = [[0,1],[0,-1],[1,0],[-1,0]].sort(() => Math.random() - 0.5);
+            maze[y][x] = 0;
+            for (let [dx, dy] of dirs) {
+                let nx = x + dx*2, ny = y + dy*2;
+                if (nx > 0 && nx < size-1 && ny > 0 && ny < size-1 && maze[ny][nx] === 1) {
+                    maze[y+dy][x+dx] = 0; carve(nx, ny);
+                }
+            }
+        }
+        carve(1, 1);
+        maze[size-2][size-2] = 9; // Exit 🏰
+
+        // Risk/Reward Item Placement
+        for (let y = 1; y < size-1; y++) {
+            for (let x = 1; x < size-1; x++) {
+                if (maze[y][x] === 0 && !(x === 1 && y === 1)) {
+                    let neighbors = 0;
+                    if (maze[y+1][x] === 1) neighbors++;
+                    if (maze[y-1][x] === 1) neighbors++;
+                    if (maze[y][x+1] === 1) neighbors++;
+                    if (maze[y][x-1] === 1) neighbors++;
+
+                    let rand = Math.random();
+                    if (neighbors >= 3) { // Dead end! 
+                        if (rand < 0.3) maze[y][x] = 4; // Dynamite risk
+                        else if (rand < 0.4) maze[y][x] = 6; // Rare Stew
+                        else if (rand < 0.7) maze[y][x] = 2; // Food
+                    } else if (rand < 0.05) {
+                        maze[y][x] = (Math.random() < 0.5) ? 2 : 3;
+                    }
+                }
+            }
+        }
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw World
+        for (let y = 0; y < gridSize; y++) {
+            for (let x = 0; x < gridSize; x++) {
+                let rx = x * cellSize, ry = y * cellSize;
+                if (maze[y][x] === 1) {
+                    ctx.fillStyle = '#143317'; // Darker Bush
+                    ctx.fillRect(rx, ry, cellSize, cellSize);
+                } else {
+                    ctx.fillStyle = '#3d5e35'; // Path
+                    ctx.fillRect(rx, ry, cellSize, cellSize);
+                    ctx.font = `${cellSize * 0.7}px serif`;
+                    let item = maze[y][x];
+                    if (item === 2) ctx.fillText('☕', rx + 2, ry + cellSize * 0.8);
+                    if (item === 3) ctx.fillText('🍞', rx + 2, ry + cellSize * 0.8);
+                    if (item === 4) ctx.fillText('🧨', rx + 2, ry + cellSize * 0.8);
+                    if (item === 6) ctx.fillText('🍲', rx + 2, ry + cellSize * 0.8);
+                    if (item === 9) ctx.fillText('🏰', rx + 2, ry + cellSize * 0.8);
+                }
+            }
+        }
+
+        // Draw Player
+        ctx.font = `${cellSize * 0.5}px serif`;
+        ctx.fillText('🤴🏻', player.x * cellSize + 2, player.y * cellSize + cellSize * 0.4);
+        ctx.fillText('🇬🇧', player.x * cellSize + 2, player.y * cellSize + cellSize * 0.85);
+
+        // --- GRADIENT FOG ---
+        ctx.save();
+        ctx.globalCompositeOperation = 'destination-in';
+        let centerX = (player.x + 0.5) * cellSize;
+        let centerY = (player.y + 0.5) * cellSize;
+        let grad = ctx.createRadialGradient(centerX, centerY, cellSize, centerX, centerY, visibilityRadius * cellSize);
+        grad.addColorStop(0, 'rgba(0,0,0,1)');
+        grad.addColorStop(0.7, 'rgba(0,0,0,0.6)');
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+    }
+
+    function movePlayer(dx, dy) {
+        let nx = player.x + dx, ny = player.y + dy;
+        if (nx >= 0 && nx < gridSize && ny >= 0 && ny < gridSize && maze[ny][nx] !== 1) {
+            player.x = nx; player.y = ny;
+            let item = maze[ny][nx];
+            if (item === 2 || item === 3) score += 1;
+            if (item === 4) score -= 3;
+            if (item === 6) score += 5;
+            if (item === 9) { nextLevel(); return; }
+            if (item !== 0) maze[ny][nx] = 0;
+            document.getElementById('score').innerText = score;
+            draw();
+        }
+    }
+
+    function nextLevel() {
+        level++;
+        gridSize += 4;
+        cellSize = Math.max(12, 350 / gridSize);
+        timeLeft = 40 + (level * 3);
+        initRound();
+    }
+
+    function initRound() {
+        canvas.width = gridSize * cellSize;
+        canvas.height = gridSize * cellSize;
+        player = { x: 1, y: 1 };
+        generateMaze(gridSize);
+        draw();
+    }
+
+    function startGame() {
+        document.getElementById('menu').style.display = 'none';
+        document.getElementById('ui-header').style.display = 'flex';
+        document.getElementById('controls').style.display = 'grid';
+        level = 1; score = 0; gridSize = 17;
+        document.getElementById('score').innerText = score;
+        document.getElementById('level').innerText = level;
+        initRound();
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('timer').innerText = timeLeft;
+            if (timeLeft <= 0) { 
+                alert("Out of time! Level restarted."); 
+                timeLeft = 40 + (level * 3); 
+                initRound(); 
+            }
+        }, 1000);
+    }
+
+    window.addEventListener('keydown', e => {
+        if (e.key === 'ArrowUp' || e.key === 'w') movePlayer(0,-1);
+        if (e.key === 'ArrowDown' || e.key === 's') movePlayer(0,1);
+        if (e.key === 'ArrowLeft' || e.key === 'a') movePlayer(-1,0);
+        if (e.key === 'ArrowRight' || e.key === 'd') movePlayer(1,0);
+    });
+</script>
+</body>
+</html>
