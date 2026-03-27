@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shrimp City: Kill Them All</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #001a33;
+            color: #ff4500;
+            font-family: 'Arial Black', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        h1 {
+            margin: 0 0 10px 0;
+            font-size: 3rem;
+            text-shadow: 3px 3px #000;
+        }
+
+        #game-container {
+            position: relative;
+            border: 5px solid white;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        canvas {
+            background: linear-gradient(to bottom, #005c99, #001a33);
+            display: block;
+        }
+
+        .score-board {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-size: 20px;
+            background: rgba(0,0,0,0.5);
+            padding: 5px 15px;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>KILL THEM ALL</h1>
+    
+    <div id="game-container">
+        <div class="score-board">Score: <span id="score">0</span></div>
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+
+        canvas.width = 800;
+        canvas.height = 500;
+
+        let score = 0;
+        const keys = {};
+
+        const player = {
+            x: 400,
+            y: 250,
+            size: 50,
+            speed: 5,
+            isAttacking: false,
+            attackTimer: 0
+        };
+
+        let enemies = [];
+        function spawnEnemy() {
+            enemies.push({
+                x: Math.random() * (canvas.width - 50) + 25,
+                y: Math.random() * (canvas.height - 50) + 25,
+                size: 40,
+                dx: (Math.random() - 0.5) * 4,
+                dy: (Math.random() - 0.5) * 4
+            });
+        }
+
+        // Initial enemies
+        for(let i = 0; i < 10; i++) spawnEnemy();
+
+        window.addEventListener('keydown', e => keys[e.code] = true);
+        window.addEventListener('keyup', e => keys[e.code] = false);
+
+        function update() {
+            // Movement
+            if (keys['ArrowUp'] || keys['KeyW']) player.y -= player.speed;
+            if (keys['ArrowDown'] || keys['KeyS']) player.y += player.speed;
+            if (keys['ArrowLeft'] || keys['KeyA']) player.x -= player.speed;
+            if (keys['ArrowRight'] || keys['KeyD']) player.x += player.speed;
+
+            // Dash Attack
+            if (keys['Space'] && !player.isAttacking) {
+                player.isAttacking = true;
+                player.attackTimer = 20;
+                player.speed = 15;
+            }
+
+            if (player.isAttacking) {
+                player.attackTimer--;
+                if (player.attackTimer <= 0) {
+                    player.isAttacking = false;
+                    player.speed = 5;
+                }
+            }
+
+            // Boundary Check
+            player.x = Math.max(25, Math.min(canvas.width - 25, player.x));
+            player.y = Math.max(25, Math.min(canvas.height - 25, player.y));
+
+            // Enemy Logic
+            enemies.forEach((enemy, index) => {
+                enemy.x += enemy.dx;
+                enemy.y += enemy.dy;
+
+                if (enemy.x < 20 || enemy.x > canvas.width - 20) enemy.dx *= -1;
+                if (enemy.y < 20 || enemy.y > canvas.height - 20) enemy.dy *= -1;
+
+                // Collision
+                const dist = Math.hypot(player.x - enemy.x, player.y - enemy.y);
+                if (dist < 40 && player.isAttacking) {
+                    enemies.splice(index, 1);
+                    score += 1;
+                    scoreElement.innerText = score;
+                    spawnEnemy();
+                }
+            });
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Underwater City Silhouettes
+            ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
+            ctx.fillRect(50, 300, 80, 200);
+            ctx.fillRect(160, 250, 100, 250);
+            ctx.fillRect(350, 350, 120, 150);
+            ctx.fillRect(550, 200, 90, 300);
+            ctx.fillRect(680, 320, 70, 180);
+
+            // Canvas Text Settings for Emojis
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+
+            // Draw Enemies
+            ctx.font = "40px serif";
+            enemies.forEach(enemy => {
+                ctx.fillText("🍤", enemy.x, enemy.y);
+            });
+
+            // Draw Player
+            if (player.isAttacking) {
+                ctx.shadowBlur = 30;
+                ctx.shadowColor = "red";
+                ctx.font = "60px serif"; // Grow when attacking
+            } else {
+                ctx.shadowBlur = 0;
+                ctx.font = "50px serif";
+            }
+            
+            ctx.fillText("🍤", player.x, player.y);
+            ctx.shadowBlur = 0;
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();
+    </script>
+</body>
+</html>
