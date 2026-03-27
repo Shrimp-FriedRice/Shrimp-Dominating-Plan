@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shrimp-Tac-Toe</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            /* Island background theme */
+            background: skyblue;
+            background-image: 
+                radial-gradient(circle at 20% 30%, #f0e68c 50px, transparent 100px),
+                radial-gradient(circle at 80% 70%, #f0e68c 80px, transparent 150px),
+                radial-gradient(circle at 50% 50%, #0077be 100%, transparent 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        h1 {
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 10px;
+        }
+
+        #game-container {
+            position: relative;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        canvas {
+            border: 2px solid #333;
+            cursor: crosshair;
+            background-color: #fff;
+        }
+
+        #status {
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Shrimp-Tac-Toe</h1>
+    <div id="game-container">
+        <canvas id="gameBoard" width="800" height="800"></canvas>
+    </div>
+    <div id="status">Your turn! (🍤)</div>
+
+<script>
+    const canvas = document.getElementById('gameBoard');
+    const ctx = canvas.getContext('2d');
+    const statusText = document.getElementById('status');
+
+    const GRID_SIZE = 50;
+    const WIN_COUNT = 10;
+    const CELL_SIZE = canvas.width / GRID_SIZE;
+    
+    let board = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(null));
+    let gameOver = false;
+
+    // Draw the grid
+    function drawGrid() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = "#ddd";
+        for (let i = 0; i <= GRID_SIZE; i++) {
+            ctx.beginPath();
+            ctx.moveTo(i * CELL_SIZE, 0);
+            ctx.lineTo(i * CELL_SIZE, canvas.height);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(0, i * CELL_SIZE);
+            ctx.lineTo(canvas.width, i * CELL_SIZE);
+            ctx.stroke();
+        }
+    }
+
+    function drawPieces() {
+        ctx.font = `${CELL_SIZE * 0.8}px serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        
+        for (let r = 0; r < GRID_SIZE; r++) {
+            for (let c = 0; c < GRID_SIZE; c++) {
+                if (board[r][c]) {
+                    ctx.fillText(board[r][c], c * CELL_SIZE + CELL_SIZE / 2, r * CELL_SIZE + CELL_SIZE / 2);
+                }
+            }
+        }
+    }
+
+    function checkWin(r, c, player) {
+        const directions = [
+            [0, 1], [1, 0], [1, 1], [1, -1]
+        ];
+
+        for (let [dr, dc] of directions) {
+            let count = 1;
+            // Check forward
+            for (let i = 1; i < WIN_COUNT; i++) {
+                if (board[r + dr * i]?.[c + dc * i] === player) count++;
+                else break;
+            }
+            // Check backward
+            for (let i = 1; i < WIN_COUNT; i++) {
+                if (board[r - dr * i]?.[c - dc * i] === player) count++;
+                else break;
+            }
+            if (count >= WIN_COUNT) return true;
+        }
+        return false;
+    }
+
+    // A simple AI that prioritizes blocking or winning
+    function aiMove() {
+        if (gameOver) return;
+
+        // Strategy: Randomly pick a spot near existing pieces for "intelligence"
+        let bestMoves = [];
+        for (let r = 0; r < GRID_SIZE; r++) {
+            for (let c = 0; c < GRID_SIZE; c++) {
+                if (!board[r][c]) {
+                    // Bias towards middle or near other pieces
+                    bestMoves.push({r, c});
+                }
+            }
+        }
+
+        if (bestMoves.length > 0) {
+            // Simplified AI: Picks a random empty spot
+            // In a 50x50, a true Minimax would be very slow, 
+            // so we use a heuristic or random for this example.
+            const move = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+            board[move.r][move.c] = "🦐";
+            
+            if (checkWin(move.r, move.c, "🦐")) {
+                statusText.innerText = "The Enemy Shrimp Won! 🦐";
+                gameOver = true;
+            } else {
+                statusText.innerText = "Your turn! (🍤)";
+            }
+            drawGrid();
+            drawPieces();
+        }
+    }
+
+    canvas.addEventListener('click', (e) => {
+        if (gameOver) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        const c = Math.floor(x / CELL_SIZE);
+        const r = Math.floor(y / CELL_SIZE);
+
+        if (board[r][c] === null) {
+            board[r][c] = "🍤";
+            drawGrid();
+            drawPieces();
+
+            if (checkWin(r, c, "🍤")) {
+                statusText.innerText = "Fried Gold! You Won! 🍤";
+                gameOver = true;
+            } else {
+                statusText.innerText = "Enemy is thinking...";
+                setTimeout(aiMove, 500);
+            }
+        }
+    });
+
+    drawGrid();
+</script>
+</body>
+</html>
