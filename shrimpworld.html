@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>THE SHRIMPOMINATION</title>
+    <style>
+        body {
+            background: #ff4500; /* Fire Orange */
+            margin: 0;
+            padding: 20px;
+            font-family: 'Comic Sans MS', 'Arial Rounded MT Bold', sans-serif;
+            color: white;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            /* Polka dot "pop" background */
+            background-image: radial-gradient(#ff8c00 20%, transparent 20%),
+                              radial-gradient(#ff2200 20%, transparent 20%);
+            background-size: 60px 60px;
+            background-position: 0 0, 30px 30px;
+        }
+
+        /* The Burning Earth Header */
+        .header-box {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 25px;
+            border: 6px solid #ffd700;
+            border-radius: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 12px 0 #8b0000;
+            position: relative;
+            max-width: 90%;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            margin: 0;
+            text-shadow: 4px 4px 0px #ff0000;
+            letter-spacing: -1px;
+        }
+
+        h2 {
+            font-size: 1.1rem;
+            color: #ffd700;
+            margin: 10px 0 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .world-icon {
+            font-size: 90px;
+            display: block;
+            margin-bottom: 15px;
+            animation: chaos-throb 1.5s infinite ease-in-out;
+        }
+
+        @keyframes chaos-throb {
+            0% { transform: scale(1) rotate(-5deg); filter: drop-shadow(0 0 15px orange); }
+            50% { transform: scale(1.2) rotate(5deg); filter: drop-shadow(0 0 40px red); }
+            100% { transform: scale(1) rotate(-5deg); filter: drop-shadow(0 0 15px orange); }
+        }
+
+        /* Revolutionary Links */
+        .grid {
+            width: 100%;
+            max-width: 450px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            z-index: 10;
+        }
+
+        .btn {
+            background: #ffffff;
+            color: #000;
+            text-decoration: none;
+            padding: 22px;
+            border-radius: 25px;
+            font-weight: 900;
+            font-size: 1.2rem;
+            border: 6px solid #000;
+            box-shadow: 8px 8px 0px #000;
+            transition: all 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            position: relative;
+        }
+
+        .btn:active {
+            transform: translate(6px, 6px);
+            box-shadow: 2px 2px 0px #000;
+            background: #ffd700;
+        }
+
+        /* Floating Chaos Elements */
+        .floating {
+            position: fixed;
+            font-size: 45px;
+            z-index: -1;
+            user-select: none;
+            animation: rise-and-spin 5s infinite linear;
+            opacity: 0.9;
+        }
+
+        @keyframes rise-and-spin {
+            from { transform: translateY(110vh) rotate(0deg); }
+            to { transform: translateY(-20vh) rotate(720deg); }
+        }
+
+        .footer {
+            margin-top: 50px;
+            font-weight: bold;
+            background: #000;
+            color: #fff;
+            padding: 12px 25px;
+            border-radius: 50px;
+            border: 3px solid #ffd700;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header-box">
+    <span class="world-icon">🍤🌎🔥</span>
+    <h1>We are shrimps</h1>
+    <h2>The shrimp's revolution has begun</h2>
+</div>
+
+<div class="grid">
+    <a href="https://shrimp-friedrice.github.io/Shrimp-Dominating-Plan/shrimpomation.html" class="btn">
+        🍤 Shrimpy of kill 'em all
+    </a>
+    
+    <a href="https://shrimp-friedrice.github.io/Shrimp-Dominating-Plan/shrimpbomination.html" class="btn">
+        🍤 Shrimp's population crisis
+    </a>
+    
+    <a href="https://shrimp-friedrice.github.io/Shrimp-Dominating-Plan/shrimptactoe.html" class="btn">
+        🍤 Shrimp's colonization
+    </a>
+    
+    <a href="https://shrimp-friedrice.github.io/Shrimp-Dominating-Plan/shrimpyjump.html" class="btn">
+        🍤 Shrimp's escape
+    </a>
+    
+    <a href="https://shrimp-friedrice.github.io/Shrimp-Dominating-Plan/hahashrimp.html" class="btn">
+        🍤 Shrimpy's torture
+    </a>
+    
+    <a href="https://shrimp-friedrice.github.io/Shrimp-Dominating-Plan/" class="btn">
+        🍤 Cult of shrimp
+    </a>
+</div>
+
+<div class="footer">🍤 WORLD DOMINATION IN PROGRESS 🍤</div>
+
+<script>
+    // More aggressive floating shrimp and fire
+    const icons = ['🍤', '🔥', '🍤', '🍤', '💥'];
+    for (let i = 0; i < 20; i++) {
+        let div = document.createElement('div');
+        div.className = 'floating';
+        div.innerText = icons[Math.floor(Math.random() * icons.length)];
+        div.style.left = Math.random() * 95 + 'vw';
+        div.style.animationDuration = (Math.random() * 2 + 3) + 's';
+        div.style.animationDelay = (Math.random() * 5) + 's';
+        document.body.appendChild(div);
+    }
+</script>
+
+</body>
+</html>
